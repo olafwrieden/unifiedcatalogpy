@@ -2,7 +2,7 @@
 
 # Introducing: UnifiedCatalogPy
 
-An unofficial Python wrapper for Microsoft Purview Data Governance's Unified Catalog API. Not affiliated or officially supported by Microsoft. Built as a personal project by tediously observing the internet browser's XHR network traffic and reverse engineering the API - ☕️ [buy me a coffee](https://buymeacoffee.com/olafwrieden).
+A Python wrapper for Microsoft Purview Data Governance's Unified Catalog API. Not affiliated or officially supported by Microsoft. Built as a personal project by tediously observing the internet browser's XHR network traffic and reverse engineering the API - ☕️ [buy me a coffee](https://buymeacoffee.com/olafwrieden).
 
 ## Overview 🔥
 
@@ -23,7 +23,7 @@ UnifiedCatalogPy simplifies the interaction with Microsoft Purview's Unified Cat
   - ~~Data Quality~~ (no API support yet!)
 
 > [!WARNING]
-> This library is currently in development and the features listed above are yet to be implemented. It is not affiliated with Microsoft.
+> This library is not locked to a specific stable version of the Microsoft Purview API as an official API for the Unified Catalog is not yet available. This means functionality may change unexpectedly. [See limitations](#limitations-)
 
 ## Quick Start 🚀
 
@@ -32,7 +32,7 @@ UnifiedCatalogPy simplifies the interaction with Microsoft Purview's Unified Cat
 Start by installing the library. You will also need to install the `azure-identity` library to authenticate with Microsoft Purview.
 
 ```bash
-# Install the library
+# Install the libraries
 pip install unifiedcatalogpy azure-identity
 ```
 
@@ -89,14 +89,11 @@ client = UnifiedCatalogClient(
 domains = client.get_governance_domains()
 ```
 
-**💡 Good to know:** Detailed usage examples for supported functionality is provided in the documentation section below. _Let's automate!_
+**💡 Good to know:** You can import types from the `unifiedcatalogpy.types` module to help with type hinting and IDE autocompletion. Detailed usage examples for supported functionality is provided in the documentation section below. _Let's automate!_
 
 ## Documentation 📖
 
 Here is what's possible with the `UnifiedCatalogPy` client.
-
-> [!NOTE]
-> This library is not locked to a specific version of the Microsoft Purview API as an official API for the Unified Catalog is not yet available. This means functionality may change unexpectedly. [See limitations](#limitations-)
 
 ### Governance Domain
 
@@ -105,13 +102,14 @@ An organizational object that provides context for your data assets and make it 
 #### Create a Governance Domain
 
 ```python
+from unifiedcatalogpy.types import GovernanceDomainType, GovernanceDomainStatus
+
 # Create a new governance domain
 new_domain = client.create_governance_domain(
     name="My First Domain",
     description="<div>This is an example of a <b>rich text</b> description.</div>",
-    type="FunctionalUnit",
-    owners=[{ "id": "<entra-object-id>" }],
-    status="Draft",
+    type=GovernanceDomainType.FunctionalUnit,
+    status=GovernanceDomainStatus.Draft,
 )
 
 # Show the new governance domain
@@ -140,19 +138,23 @@ print(domain)
 #### Update a Governance Domain
 
 ```python
+from unifiedcatalogpy.types import GovernanceDomainType, GovernanceDomainStatus
+
 # Update a governance domain by ID
 updated_domain = client.update_governance_domain(
     governance_domain_id="<your-governance-domain-id>",
     name="Updated Domain Name",
-    description="<div>This is an updated domain description.</div>",
-    type="FunctionalUnit",
+    description="<div>This is an <b>updated</b> domain description.</div>",
     owners=[{ "id": "<entra-object-id>" }],
-    status="Draft",
+    type=GovernanceDomainType.FunctionalUnit,
+    status=GovernanceDomainStatus.Draft,
 )
 
 # Show the updated governance domain
 print(updated_domain)
 ```
+
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
 
 #### Delete a Governance Domain
 
@@ -175,11 +177,13 @@ Active values that provide context but also apply policies that determine how yo
 #### Create a Glossary Term
 
 ```python
+from unifiedcatalogpy.types import TermStatus
+
 # Create new glossary term
 term = client.create_term(
     name="My First Term",
     description="<div>This is a <b>rich description</b> of my first term.</div>",
-    status="Draft",
+    status=TermStatus.Draft,
     governance_domain_id="<your-governance-domain-id>",
     acronyms=["ACRONYM_1", "ACRONYM_2"],
     resources=[
@@ -194,6 +198,8 @@ term = client.create_term(
 # Show the new glossary term
 print(term)
 ```
+
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
 
 #### Retrieve all Glossary Terms in a Governance Domain
 
@@ -221,6 +227,8 @@ print(term)
 #### Update a Glossary Term
 
 ```python
+from unifiedcatalogpy.types import TermStatus
+
 # Update a term
 updated_term = client.update_term(
     term_id="<your-term-id>",
@@ -235,12 +243,14 @@ updated_term = client.update_term(
             "url": "https://example.com/more",
         }
     ],
-    status="Draft",
+    status=TermStatus.Draft,
 )
 
 # Show the updated term
 print(updated_term)
 ```
+
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
 
 #### Delete a Glossary Term
 
@@ -331,18 +341,20 @@ A kit of data assets (tables, files, Power BI reports, etc.) that provides asset
 #### Create a Data Product
 
 ```python
+from unifiedcatalogpy.types import DataProductStatus, DataProductType, DataProductUpdateFrequency
+
 # Create a new Data Product
 data_product = client.create_data_product(
-    governance_domain_id=governance_domain,
+    governance_domain_id="<your-governance-domain-id>",
     name="My First Data Product",
     description="<div>This is a <b>new</b> data product created for demonstration purposes.</div>",
-    type="Operational",
+    type=DataProductType.Operational,
     owners=[{"id": "<entra-object-id>"}],
-    status="Draft",
+    status=DataProductStatus.Draft,
     audience=[],
     business_use="<div>Use Case 1, 2, 3</div>",
     documentation=[],
-    updateFrequency="Weekly",
+    updateFrequency=DataProductUpdateFrequency.Weekly,
     endorsed=False,
     terms_of_use=[],
 )
@@ -350,6 +362,8 @@ data_product = client.create_data_product(
 # Show Data Product
 print(data_product)
 ```
+
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
 
 #### Retrieve all Data Products in a Governance Domain
 
@@ -377,6 +391,8 @@ print(data_product)
 #### Update a Data Product
 
 ```python
+from unifiedcatalogpy.types import DataProductStatus, DataProductType, DataProductUpdateFrequency
+
 # Update a data product
 updated_data_product = client.update_data_product(
     data_product_id="<your-data-product-id>",
@@ -389,19 +405,21 @@ updated_data_product = client.update_data_product(
             "description": "Data Product Owner",
         }
     ],
-    status="Draft",
+    status=DataProductStatus.Draft,
     audience=[],
     business_use="<div>Use Case 1, 2, 3</div>",
     documentation=[],
     endorsed=False,
     terms_of_use=[],
-    type="Operational",
-    updateFrequency="Monthly",
+    type=DataProductType.Operational,
+    updateFrequency=DataProductUpdateFrequency.Weekly,
 )
 
 # Show the updated data product
 print(updated_data_product)
 ```
+
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
 
 #### Delete a Data Product
 
@@ -458,6 +476,8 @@ objective = client.create_objective(
 print(objective)
 ```
 
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
+
 #### Retrieve all Objectives in a Governance Domain
 
 ```python
@@ -501,6 +521,8 @@ updated_objective = client.update_objective(
 # Show updated objective
 print(updated_objective)
 ```
+
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
 
 #### Delete an Objective
 
@@ -616,6 +638,8 @@ cde = client.create_critical_data_element(
 print(cde)
 ```
 
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
+
 #### Retrieve all Critical Data Elements in a Governance Domain
 
 ```python
@@ -656,6 +680,8 @@ updated_cde = client.update_critical_data_element(
 # Show updated critical data element
 print(updated_cde)
 ```
+
+**💡 Good to know:** See [Converting Between User/Group Names and Object IDs](#converting-between-usergroup-names-and-object-ids-) if you you need a human-readable name instead of an ID.
 
 #### Delete a Critical Data Element
 
@@ -716,7 +742,7 @@ Health management refers to the ongoing processes and practices involved in ensu
 Track your journey to complete data governance by monitoring health controls to track your progress. Health controls measure your current governance practices against standards that give your data estate a score. [Learn more](https://learn.microsoft.com/en-us/purview/how-to-health-controls)
 
 > [!WARNING]
-> You cannot interact with Health Controls through this library yet. This is work in progress. A pull request to add this functionality is welcome.
+> Not all Health Control functions can be interacted with through this library yet. This is work in progress.
 
 ##### Create a Health Control
 
@@ -724,22 +750,53 @@ Track your journey to complete data governance by monitoring health controls to 
 
 ##### Update a Health Control
 
-##### Delete a Health Control
+##### Update Health Controls Refresh Schedule
+
+```python
+# Update the health control refresh schedule
+schedule = client.update_health_control_refresh_schedule(
+    frequency="Week",
+    interval=1,
+    status="Enabled",
+    start_time="2025-01-01T00:00:00Z",
+    time_zone="E. Australia Standard Time",
+    end_time=None,
+)
+
+# Show the updated schedule
+print(schedule)
+```
+
+Note: Health Controls cannot be deleted, you should instead update their status to "Disabled".
 
 #### Health Actions (preview)
 
 Health actions are concrete steps you can take to improve data governance across your data estate. The actions are provided in a single list that can focus your data governance journey, and democratize ownership. Completing these actions will improve data quality and discoverability across your data estate. [Learn more](https://learn.microsoft.com/en-us/purview/data-estate-health-actions)
 
+**💡 Good to know:** To continually export Health Actions from Purview for condition-based alerting or reporting, you may like to consider using the [Self-serve analytics and insights (preview)](https://learn.microsoft.com/en-us/purview/purview-dg-self-service-analytics-and-insight) integration to natively export the entire Purview domain model to Microsoft Fabric OneLake or to an Azure Data Lake Storage Gen2 account.
+
 > [!WARNING]
-> You cannot interact with Health Actions through this library yet. This is work in progress. A pull request to add this functionality is welcome.
+> Not all Health Action functions can be interacted with through this library. This is work in progress.
 
-##### Create a Health Action
+##### Retrieve all Health Actions in a Governance Domain
 
-##### Retrieve a Health Action
+##### Retrieve a Health Action by ID
+
+```python
+# Get a health action by ID
+action = client.get_health_action_by_id("<your-health-action-id>")
+
+# Show the health action
+print(action)
+```
 
 ##### Update a Health Action
 
-##### Delete a Health Action
+```python
+
+```
+
+Note: Health Actions cannot be deleted, you should instead update their status to "Resolved".
 
 #### Data Quality
 
@@ -747,6 +804,16 @@ Data quality is the measurement of the quality of data in an organization, based
 
 > [!WARNING]
 > You cannot interact with Data Quality through this library yet. There is a lot of complexity in the API, data quality sub-features, and interpretation of the results. A pull request to add this functionality is welcome.
+
+## Converting between User/Group Names and Object IDs 📃
+
+As shown in many of the code examples above, Microsoft Purview item ownership is specified using the user's or group's Object ID as shown in your Microsoft Entra tenant.
+
+You may like to install the [Microsoft Graph Python SDK](https://pypi.org/project/msgraph-sdk/) using `pip install msgraph-sdk` to convert between user/group names or email addresses and their respective Object IDs.
+
+**Example Scenario:** Utilising the Graph SDK would allow you to specify a spreadsheet of governance domains and their owners (by name or email address), read it using Python, and then convert the names to Object IDs before passing them to the Unified Catalog API.
+
+Either way, Microsoft Purview will automatically convert the ID into the user/group name when showing ownership information in the Unified Catalog.
 
 ## Limitations 🚧
 

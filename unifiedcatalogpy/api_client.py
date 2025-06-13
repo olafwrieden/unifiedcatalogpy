@@ -1,5 +1,6 @@
 import requests
 from typing import Dict
+from . import __version__
 from unifiedcatalogpy.models import Result
 
 
@@ -14,7 +15,11 @@ class ApiClient:
     ) -> Result:
         full_url = self.base_url + endpoint
         token = self.credential.get_token(self.resource_scope).token
-        headers = {"Authorization": f"Bearer {token}"}
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "User-Agent": f"unifiedcatalogpy/{__version__}",
+        }
+
         try:
             response = requests.request(
                 method=http_method,

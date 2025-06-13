@@ -5,6 +5,4 @@ def format_base_url(account_id: str) -> str:
     :param account_id: The guid of the Microsoft Purview account.
     :return: The formatted base URL.
     """
-    return (
-        f"https://{account_id}-api.purview-service.microsoft.com/datagovernance/catalog"
-    )
+    return f"https://{account_id}-api.purview-service.microsoft.com/datagovernance"

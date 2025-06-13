@@ -1,6 +1,7 @@
-from typing import List, Literal
+from typing import List
 from .utils import format_base_url
 from .api_client import ApiClient
+from .types import *
 
 
 class UnifiedCatalogClient:
@@ -26,24 +27,20 @@ class UnifiedCatalogClient:
         :return: List of governance domains.
         """
 
-        response = self.api_client.get("/businessdomains")
+        response = self.api_client.get("/catalog/businessdomains")
         return response.data["value"]
 
-    def get_governance_domain_by_id(self, domain_id: str):
+    def get_governance_domain_by_id(self, governance_domain_id: str):
         """
         Get a governance domain by its ID.
 
-        :param domain_id: The ID of the governance domain.
+        :param governance_domain_id: The ID of the governance domain.
         :return: The governance domain data.
         """
-        response = self.api_client.get(f"/businessdomains/{domain_id}")
+        response = self.api_client.get(
+            f"/catalog/businessdomains/{governance_domain_id}"
+        )
         return response.data
-
-    GovernanceDomainType = Literal[
-        "FunctionalUnit", "LineOfBusiness", "DataDomain", "Regulatory", "Project"
-    ]
-
-    GovernanceDomainStatus = Literal["Draft", "Published"]
 
     def create_governance_domain(
         self,
@@ -51,7 +48,7 @@ class UnifiedCatalogClient:
         description: str,
         type: GovernanceDomainType,
         parent_id: str = None,
-        status: GovernanceDomainStatus = "Draft",
+        status: GovernanceDomainStatus = GovernanceDomainStatus.Draft,
     ):
         """
         Create a new governance domain.
@@ -71,7 +68,7 @@ class UnifiedCatalogClient:
             "parent_id": parent_id,
             "status": status,
         }
-        response = self.api_client.post("/businessdomains", data=data)
+        response = self.api_client.post("/catalog/businessdomains", data=data)
         return response.data
 
     def update_governance_domain(
@@ -79,7 +76,7 @@ class UnifiedCatalogClient:
         governance_domain_id: str,
         name: str = None,
         description: str = None,
-        type: str = None,
+        type: GovernanceDomainType = None,
         parent_id: str = None,
         owners: List[dict] = [],
         status: GovernanceDomainStatus = "Draft",
@@ -96,29 +93,29 @@ class UnifiedCatalogClient:
 
         try:
             response = self.api_client.put(
-                f"/businessdomains/{governance_domain_id}", data=data
+                f"/catalog/businessdomains/{governance_domain_id}", data=data
             )
             return response.data
         except Exception as e:
             raise Exception(e)
 
-    def delete_governance_domain(self, domain_id: str):
+    def delete_governance_domain(self, governance_domain_id: str):
         """
         Delete a governance domain.
 
-        :param domain_id: The ID of the governance domain to delete.
+        :param governance_domain_id: The ID of the governance domain to delete.
         :return: The response from the API.
         """
 
         try:
-            response = self.api_client.delete(f"/businessdomains/{domain_id}")
+            response = self.api_client.delete(
+                f"/catalog/businessdomains/{governance_domain_id}"
+            )
             if not response.status_code == 204:
                 return False
             return True
         except Exception as e:
             raise Exception(e)
-
-    TermStatus = Literal["Draft", "Published", "Expired"]
 
     def get_terms(self, governance_domain_id: str):
         """
@@ -126,7 +123,9 @@ class UnifiedCatalogClient:
 
         :return: List of terms.
         """
-        response = self.api_client.get(f"/terms?domainId={governance_domain_id}")
+        response = self.api_client.get(
+            f"/catalog/terms?domainId={governance_domain_id}"
+        )
         return response.data["value"]
 
     def create_term(
@@ -138,7 +137,7 @@ class UnifiedCatalogClient:
         owners: List[dict] = [],
         acronyms: List[str] = [],
         resources: List[dict] = [],
-        status: TermStatus = "Draft",
+        status: TermStatus = TermStatus.Draft,
     ):
         """
         Create a new term.
@@ -168,7 +167,7 @@ class UnifiedCatalogClient:
             "status": status,
         }
         print(data)
-        response = self.api_client.post("/terms", data=data)
+        response = self.api_client.post("/catalog/terms", data=data)
         return response.data
 
     def update_term(
@@ -181,7 +180,7 @@ class UnifiedCatalogClient:
         owners: List[dict] = [],
         acronyms: List[str] = [],
         resources: List[dict] = [],
-        status: TermStatus = "Draft",
+        status: TermStatus = TermStatus.Draft,
     ):
         """
         Update an existing term.
@@ -213,7 +212,7 @@ class UnifiedCatalogClient:
             "status": status,
         }
 
-        response = self.api_client.put(f"/terms/{term_id}", data=data)
+        response = self.api_client.put(f"/catalog/terms/{term_id}", data=data)
         return response.data
 
     def delete_term(self, term_id: str):
@@ -238,13 +237,8 @@ class UnifiedCatalogClient:
         :param term_id: The ID of the term.
         :return: The term data.
         """
-        response = self.api_client.get(f"/terms/{term_id}")
+        response = self.api_client.get(f"/catalog/terms/{term_id}")
         return response.data
-
-    RelationshipType = Literal["Synonym", "Related"]
-    RelationshipEntityType = Literal[
-        "Term", "DataProduct", "CriticalDataElement", "CustomMetadata"
-    ]
 
     def create_relationship(
         self,
@@ -274,7 +268,7 @@ class UnifiedCatalogClient:
         if entity_type not in endpoint_map:
             raise ValueError(f"Unsupported entity type: {entity_type}")
 
-        endpoint = f"/{endpoint_map[entity_type]}/{entity_id}/relationships"
+        endpoint = f"/catalog/{endpoint_map[entity_type]}/{entity_id}/relationships"
         data = {
             "description": description,
             "entityId": target_entity_id,
@@ -312,7 +306,7 @@ class UnifiedCatalogClient:
         if entity_type not in endpoint_map:
             raise ValueError(f"Unsupported entity type: {entity_type}")
 
-        endpoint = f"/{endpoint_map[entity_type]}/{entity_id}/relationships"
+        endpoint = f"/catalog/{endpoint_map[entity_type]}/{entity_id}/relationships"
         params = {
             "entityId": target_entity_id,
             "entityType": entity_type,
@@ -375,19 +369,6 @@ class UnifiedCatalogClient:
     #         raise Exception(e)
 
     # Data Products
-    DataProductStatus = Literal["Draft", "Published", "Expired"]
-    DataProductType = Literal[
-        "Dataset",
-        "MasterDataAndReferenceData",
-        "BusinessSystemOrApplication",
-        "ModelTypes",
-        "DashboardsOrReports",
-        "Operational",
-    ]
-    DataProductUpdateFrequency = Literal[
-        "Hourly", "Daily", "Weekly", "Monthly", "Quarterly", "Yearly"
-    ]
-
     def get_data_products(self, governance_domain_id: str):
         """
         Get the list of data products."
@@ -395,7 +376,9 @@ class UnifiedCatalogClient:
         :return: List of data products.
         """
 
-        response = self.api_client.get(f"/dataproducts?domainId={governance_domain_id}")
+        response = self.api_client.get(
+            f"/catalog/dataproducts?domainId={governance_domain_id}"
+        )
         return response.data["value"]
 
     def get_data_product_by_id(self, data_product_id: str):
@@ -406,7 +389,7 @@ class UnifiedCatalogClient:
         :return: The data product data.
         """
 
-        response = self.api_client.get(f"/dataproducts/{data_product_id}")
+        response = self.api_client.get(f"/catalog/dataproducts/{data_product_id}")
         return response.data
 
     def create_data_product(
@@ -417,11 +400,11 @@ class UnifiedCatalogClient:
         type: DataProductType,
         business_use: str,
         owners: List[dict] = [],
-        audience: List[str] = [],
+        audience: List[AudienceType] = [],
         terms_of_use: List[str] = [],
         documentation: List[str] = [],
         updateFrequency: DataProductUpdateFrequency = None,
-        status: DataProductStatus = "Draft",
+        status: DataProductStatus = DataProductStatus.Draft,
         endorsed: bool = False,
     ):
         """
@@ -461,7 +444,7 @@ class UnifiedCatalogClient:
             "status": status,
             "endorsed": endorsed,
         }
-        response = self.api_client.post("/dataproducts", data=data)
+        response = self.api_client.post("/catalog/dataproducts", data=data)
         return response.data
 
     def update_data_product(
@@ -470,14 +453,14 @@ class UnifiedCatalogClient:
         name: str = None,
         description: str = None,
         governance_domain_id: str = None,
-        type: str = None,
+        type: DataProductType = None,
         business_use: str = None,
         owners: List[dict] = [],
-        audience: List[str] = [],
+        audience: List[AudienceType] = [],
         terms_of_use: List[str] = [],
         documentation: List[str] = [],
         updateFrequency: DataProductUpdateFrequency = None,
-        status: DataProductStatus = "Draft",
+        status: DataProductStatus = DataProductStatus.Draft,
         endorsed: bool = False,
     ):
         """
@@ -518,7 +501,9 @@ class UnifiedCatalogClient:
             "endorsed": endorsed,
         }
 
-        response = self.api_client.put(f"/dataproducts/{data_product_id}", data=data)
+        response = self.api_client.put(
+            f"/catalog/dataproducts/{data_product_id}", data=data
+        )
         return response.data
 
     def delete_data_product(self, data_product_id: str):
@@ -530,7 +515,9 @@ class UnifiedCatalogClient:
         """
 
         try:
-            response = self.api_client.delete(f"/dataproducts/{data_product_id}")
+            response = self.api_client.delete(
+                f"/catalog/dataproducts/{data_product_id}"
+            )
             if not response.status_code == 204:
                 return False
             return True
@@ -543,14 +530,12 @@ class UnifiedCatalogClient:
     # Delete: dataproducts/58ddd299-5434-493b-956f-01c76171621f/relationships?entityType=Term&entityId=4939d006-fff0-4bad-9b03-53700b48b31b&relationshipType=Related
 
     # Objectives
-    ObjectiveStatus = Literal["Draft", "Published", "Closed"]
-
     def create_objective(
         self,
         definition: str,
         governance_domain_id: str,
         owners: List[dict] = [],
-        status: ObjectiveStatus = "Draft",
+        status: ObjectiveStatus = ObjectiveStatus.Draft,
         target_date: str = None,
     ):
         """
@@ -576,7 +561,7 @@ class UnifiedCatalogClient:
             "definition": definition,
             "targetDate": target_date,
         }
-        response = self.api_client.post("/objectives", data=data)
+        response = self.api_client.post("/catalog/objectives", data=data)
         return response.data
 
     def get_objectives(self, governance_domain_id: str):
@@ -587,7 +572,9 @@ class UnifiedCatalogClient:
         :return: List of objectives.
         """
 
-        response = self.api_client.get(f"/objectives?domainId={governance_domain_id}")
+        response = self.api_client.get(
+            f"/catalog/objectives?domainId={governance_domain_id}"
+        )
         return response.data["value"]
 
     def get_objective_by_id(self, objective_id: str):
@@ -598,7 +585,7 @@ class UnifiedCatalogClient:
         :return: The objective data.
         """
 
-        response = self.api_client.get(f"/objectives/{objective_id}")
+        response = self.api_client.get(f"/catalog/objectives/{objective_id}")
         return response.data
 
     def update_objective(
@@ -607,7 +594,7 @@ class UnifiedCatalogClient:
         definition: str = None,
         governance_domain_id: str = None,
         owners: List[dict] = [],
-        status: ObjectiveStatus = "Draft",
+        status: ObjectiveStatus = ObjectiveStatus.Draft,
         target_date: str = None,
     ):
         """
@@ -636,7 +623,7 @@ class UnifiedCatalogClient:
             "targetDate": target_date,
         }
 
-        response = self.api_client.put(f"/objectives/{objective_id}", data=data)
+        response = self.api_client.put(f"/catalog/objectives/{objective_id}", data=data)
         return response.data
 
     def delete_objective(self, objective_id: str):
@@ -648,7 +635,7 @@ class UnifiedCatalogClient:
         """
 
         try:
-            response = self.api_client.delete(f"/objectives/{objective_id}")
+            response = self.api_client.delete(f"/catalog/objectives/{objective_id}")
             if not response.status_code == 204:
                 return False
             return True
@@ -656,16 +643,14 @@ class UnifiedCatalogClient:
             raise Exception(e)
 
     # Critical Data Elements
-    CriticalDataElementStatus = Literal["Draft", "Published", "Expired"]
-
     def create_critical_data_element(
         self,
         name: str,
         description: str,
         governance_domain_id: str,
         owners: List[dict] = [],
-        status: CriticalDataElementStatus = "Draft",
-        data_type: str = "Number",
+        status: CriticalDataElementStatus = CriticalDataElementStatus.Draft,
+        data_type: CriticalDataElementDataType = CriticalDataElementDataType.Number,
     ):
         """
         Create a new critical data element.
@@ -692,7 +677,7 @@ class UnifiedCatalogClient:
             "status": status,
             "dataType": data_type,
         }
-        response = self.api_client.post("/criticalDataElements", data=data)
+        response = self.api_client.post("/catalog/criticalDataElements", data=data)
         return response.data
 
     def get_critical_data_elements(self, governance_domain_id: str):
@@ -703,7 +688,7 @@ class UnifiedCatalogClient:
         :return: List of critical data elements.
         """
         response = self.api_client.get(
-            f"/criticalDataElements?domainId={governance_domain_id}"
+            f"/catalog/criticalDataElements?domainId={governance_domain_id}"
         )
         return response.data["value"]
 
@@ -715,7 +700,7 @@ class UnifiedCatalogClient:
         :return: The critical data element data.
         """
 
-        response = self.api_client.get(f"/criticalDataElements/{cde_id}")
+        response = self.api_client.get(f"/catalog/criticalDataElements/{cde_id}")
         return response.data
 
     def update_critical_data_element(
@@ -725,8 +710,8 @@ class UnifiedCatalogClient:
         description: str = None,
         governance_domain_id: str = None,
         owners: List[dict] = [],
-        status: CriticalDataElementStatus = "Draft",
-        data_type: str = "Number",
+        status: CriticalDataElementStatus = CriticalDataElementStatus.Draft,
+        data_type: CriticalDataElementDataType = CriticalDataElementDataType.Number,
     ):
         """
         Update an existing critical data element.
@@ -756,7 +741,9 @@ class UnifiedCatalogClient:
             "dataType": data_type,
         }
 
-        response = self.api_client.put(f"/criticalDataElements/{cde_id}", data=data)
+        response = self.api_client.put(
+            f"/catalog/criticalDataElements/{cde_id}", data=data
+        )
         return response.data
 
     def delete_critical_data_element(self, cde_id: str):
@@ -768,7 +755,7 @@ class UnifiedCatalogClient:
         """
 
         try:
-            response = self.api_client.delete(f"/criticalDataElements/{cde_id}")
+            response = self.api_client.delete(f"/catalog/criticalDataElements/{cde_id}")
             if not response.status_code == 204:
                 return False
             return True
@@ -776,8 +763,6 @@ class UnifiedCatalogClient:
             raise Exception(e)
 
     # Key Results
-    KeyResultStatus = Literal["Behind", "OnTrack", "AtRisk"]
-
     def create_key_result(
         self,
         progress: int,
@@ -816,7 +801,7 @@ class UnifiedCatalogClient:
             "domainId": governance_domain_id,
         }
         response = self.api_client.post(
-            f"/objectives/{objective_id}/keyResults", data=data
+            f"/catalog/objectives/{objective_id}/keyResults", data=data
         )
         return response.data
 
@@ -862,7 +847,7 @@ class UnifiedCatalogClient:
         }
 
         response = self.api_client.put(
-            f"/objectives/{objective_id}/keyResults/{key_result_id}", data=data
+            f"/catalog/objectives/{objective_id}/keyResults/{key_result_id}", data=data
         )
         return response.data
 
@@ -877,7 +862,7 @@ class UnifiedCatalogClient:
 
         try:
             response = self.api_client.delete(
-                f"/objectives/{objective_id}/keyResults/{key_result_id}"
+                f"/catalog/objectives/{objective_id}/keyResults/{key_result_id}"
             )
             if not response.status_code == 204:
                 return False
@@ -893,7 +878,7 @@ class UnifiedCatalogClient:
         :return: List of key results.
         """
 
-        response = self.api_client.get(f"/objectives/{objective_id}/keyResults")
+        response = self.api_client.get(f"/catalog/objectives/{objective_id}/keyResults")
         return response.data["value"]
 
     def get_key_result_by_id(self, key_result_id: str, objective_id: str):
@@ -905,7 +890,123 @@ class UnifiedCatalogClient:
         objective_id: The ID of the objective.
         :return: The key result data.
         """
+
         response = self.api_client.get(
-            f"/objectives/{objective_id}/keyResults/{key_result_id}"
+            f"/catalog/objectives/{objective_id}/keyResults/{key_result_id}"
+        )
+        return response.data
+
+    def get_health_action_by_id(self, health_action_id: str):
+        """
+        Get a health action by its ID.
+
+        :param health_action_id: The ID of the health action.
+        :return: The health action data.
+        """
+
+        params = {"api-version": "2024-02-01-preview"}
+        response = self.api_client.get(
+            f"/health/actions/{health_action_id}", params=params
+        )
+        return response.data
+
+    def update_health_action(
+        self,
+        health_action_id: str,
+        name: str = None,
+        description: str = None,
+        status: HealthActionStatus = None,
+        assigned_to: List[str] = None,
+        extra_properties: dict = None,
+        category: str = None,
+        finding_type: str = None,
+        finding_sub_type: str = None,
+        finding_name: str = None,
+        recommendation: str = None,
+        governance_domain_id: str = None,
+        severity: str = None,
+        target_entity_type: str = None,
+        target_entity_id: str = None,
+        reason: str = None,
+    ):
+        """
+        Update an existing health action.
+
+        :param health_action_id: The ID of the health action to update.
+        :param name: The new name of the health action.
+        :param description: The new description of the health action.
+        :param status: The new status of the health action.
+        :param assigned_to: Optional list of user IDs assigned to the health action.
+        :param extra_properties: Optional dictionary of extra properties for the health action.
+        :param category: Optional category of the health action.
+        :param finding_type: Optional finding type of the health action.
+        :param finding_sub_type: Optional finding subtype of the health action.
+        :param finding_name: Optional finding name of the health action.
+        :param recommendation: Optional recommendation for the health action.
+        :param governance_domain_id: Optional domain ID of the health action.
+        :param severity: Optional severity of the health action.
+        :param target_entity_type: Optional target entity type of the health action.
+        :param target_entity_id: Optional target entity ID of the health action.
+        :param reason: Optional reason for the health action.
+        :return: The updated health action.
+        """
+
+        data = {
+            "id": health_action_id,
+            "name": name,
+            "description": description,
+            "status": status,
+            "assignedTo": assigned_to,
+            "extraProperties": extra_properties,
+            "category": category,
+            "findingType": finding_type,
+            "findingSubType": finding_sub_type,
+            "findingName": finding_name,
+            "recommendation": recommendation,
+            "domainId": governance_domain_id,
+            "severity": severity,
+            "targetEntityType": target_entity_type,
+            "targetEntityId": target_entity_id,
+            "reason": reason,
+        }
+
+        response = self.api_client.put(f"/health/actions/{health_action_id}", data=data)
+        return response.data
+
+    def update_health_control_refresh_schedule(
+        self,
+        frequency: HealthControlFrequency,
+        interval: int,
+        status: HealthControlScheduleStatus,
+        start_time: str,
+        time_zone: str,
+        end_time: str = None,
+    ):
+        """
+        Adjusts the Health Controls refresh schedule.
+
+        :param frequency: The frequency of the refresh (e.g., "Day").
+        :param interval: The interval of the refresh.
+        :param status: The status of the refresh (e.g., "Enabled").
+        :param start_time: The start time of the refresh in ISO 8601 format.
+        :param time_zone: The time zone of the refresh.
+        :param end_time: Optional end time of the refresh in ISO 8601 format.
+        :return: The response from the API.
+        """
+
+        data = {
+            "frequency": frequency,
+            "interval": interval,
+            "status": status,
+            "startTime": start_time,
+            "timeZone": time_zone,
+        }
+
+        if end_time:
+            data["endTime"] = end_time
+
+        params = {"api-version": "2024-02-01-preview"}
+        response = self.api_client.put(
+            "/health/controls/schedule", params=params, data=data
         )
         return response.data
